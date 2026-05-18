@@ -22,13 +22,13 @@ lint:
 
 # docker
 up:
-  docker-compose up -d
+  docker compose up -d
 
 kill *args:
-  docker-compose kill {{args}}
+  docker compose kill {{args}}
 
 build:
-  docker-compose build
+  docker compose build
 
 ps:
-  docker-compose ps
+  docker compose ps
