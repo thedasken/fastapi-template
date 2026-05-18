@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Setup (first time):**
 ```shell
 cp .env.example .env
-poetry install
+uv sync --all-groups
+pre-commit install
 just up        # starts Postgres via docker-compose
 just migrate   # run migrations
 ```
