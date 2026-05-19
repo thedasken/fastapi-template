@@ -1,0 +1,79 @@
+# Only to showcase the url pattern matching using root_path
+services:
+  traefik:
+    image: traefik:v3.7
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--accesslog=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
+
+  postgres:
+    image: library/postgres:17-trixie
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+      - POSTGRES_DB=app
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      start_period: 10s
+      retries: 5
+    networks:
+      - web
+
+  app-v0:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    env_file: [.env.traefik]
+    environment:
+      - APP_VERSION=0.1.0
+      - API_VERSION=0
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [web]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-v0.rule=PathPrefix(`/v0`)"
+      - "traefik.http.routers.app-v0.entrypoints=web"
+      - "traefik.http.routers.app-v0.middlewares=strip-v0"
+      - "traefik.http.middlewares.strip-v0.stripprefix.prefixes=/v0"
+      - "traefik.http.services.app-v0.loadbalancer.server.port=8000"
+
+  app-v1:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    env_file: [.env.traefik]
+    environment:
+      - APP_VERSION=1.0.0
+      - API_VERSION=1
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [web]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-v1.rule=PathPrefix(`/v1`)"
+      - "traefik.http.routers.app-v1.entrypoints=web"
+      - "traefik.http.routers.app-v1.middlewares=strip-v1"
+      - "traefik.http.middlewares.strip-v1.stripprefix.prefixes=/v1"
+      - "traefik.http.services.app-v1.loadbalancer.server.port=8000"
+
+volumes:
+  app_db_data:
+
+networks:
+  web:
+    driver: bridge
