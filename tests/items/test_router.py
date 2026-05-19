@@ -42,8 +42,8 @@ async def test_list_items_returns_total(client: AsyncClient) -> None:
     data = response.json()
     assert "total" in data
     assert "items" in data
-    assert data["total"] >= 2
-    assert len(data["items"]) >= 2
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
 
 
 async def test_list_items_pagination(client: AsyncClient) -> None:
@@ -54,7 +54,7 @@ async def test_list_items_pagination(client: AsyncClient) -> None:
     assert page1.status_code == 200
     data1 = page1.json()
     assert len(data1["items"]) == 2
-    assert data1["total"] >= 5
+    assert data1["total"] == 5
 
     page2 = await client.get("/items", params={"limit": 2, "offset": 2})
     assert page2.status_code == 200
