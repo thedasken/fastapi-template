@@ -35,7 +35,7 @@ Migration files are named `YYYY-MM-DD_slug` and are auto-formatted with ruff.
 
 **Docker:**
 ```shell
-just up / just kill / just build / just ps
+just up / just kill / just build / just ps / just down
 docker compose -f docker-compose.prod.yml up -d --build   # production
 ```
 
@@ -53,4 +53,4 @@ All application code lives in `src/`. There is no subdirectory structure yet —
 
 **Database pattern:** Tables are defined directly on the `metadata` object in `src/database.py` (SQLAlchemy Core style, not ORM declarative). Alembic's `env.py` imports that `metadata` for autogenerate.
 
-**Environments:** `LOCAL` and `TESTING` are debug (docs visible, no Sentry required). `STAGING` and `PRODUCTION` are deployed (docs hidden, Sentry required, `root_path` set to `/v{APP_VERSION}`).
+**Environments:** `LOCAL` and `TESTING` are debug (docs visible, no Sentry required). `STAGING` and `PRODUCTION` are deployed (docs hidden, Sentry required, `root_path` set to `/v{API_VERSION}`).

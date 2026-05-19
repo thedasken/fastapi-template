@@ -28,24 +28,25 @@ brew install just
 Debian/Ubuntu:
 ```shell
 apt install just
-````
+```
 
 Others: [link](https://github.com/casey/just?tab=readme-ov-file#packages)
 
-### Setup poetry
+### Setup uv
 ```shell
-pip install poetry
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Other ways: [link](https://python-poetry.org/docs/#installation)
+Other ways: [link](https://docs.astral.sh/uv/getting-started/installation/)
 
-### Setup Postgres (16.3)
+### Copy the environment file and install dependencies
+1. `cp .env.example .env`
+2. `uv sync`
+
+### Setup Postgres (17)
 ```shell
 just up
 ```
-### Copy the environment file and install dependencies
-1. `cp .env.example .env`
-2. `poetry install`
 
 ### Run the uvicorn server
 With default settings:
