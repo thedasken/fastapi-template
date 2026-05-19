@@ -11,7 +11,7 @@ class ItemCreate(CustomModel):
 
 
 class ItemUpdate(CustomModel):
-    title: str | None = Field(default=None, min_length=1, max_length=255)
+    title: str = Field(default=None, min_length=1, max_length=255)
     description: str | None = None
 
 
