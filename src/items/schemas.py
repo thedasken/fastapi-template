@@ -20,3 +20,8 @@ class ItemResponse(CustomModel):
     title: str
     description: str | None
     created_at: datetime
+
+
+class ItemListResponse(CustomModel):
+    total: int
+    items: list[ItemResponse]

@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from src.items.exceptions import ItemNotFound
@@ -22,12 +22,17 @@ async def get_item_by_id(item_id: int, conn: AsyncConnection) -> dict:
 
 async def list_items(
     conn: AsyncConnection, *, limit: int = 50, offset: int = 0
-) -> list[dict]:
-    query = (
+) -> tuple[list[dict], int]:
+    items_query = (
         select(items).limit(limit).offset(offset).order_by(items.c.created_at.desc())
     )
-    result = await conn.execute(query)
-    return [dict(row) for row in result.mappings().all()]
+    # NOTE: if you add WHERE conditions to items_query, replicate them here
+    count_query = select(func.count()).select_from(items)
+    items_result = await conn.execute(items_query)
+    count_result = await conn.execute(count_query)
+    return [
+        dict(row) for row in items_result.mappings().all()
+    ], count_result.scalar_one()
 
 
 async def create_item(data: ItemCreate, conn: AsyncConnection) -> dict:

@@ -6,18 +6,19 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from src.database import get_db_connection
 from src.items import service
 from src.items.dependencies import valid_item_id
-from src.items.schemas import ItemCreate, ItemResponse, ItemUpdate
+from src.items.schemas import ItemCreate, ItemListResponse, ItemResponse, ItemUpdate
 
 router = APIRouter(prefix="/items", tags=["items"])
 
 
-@router.get("", response_model=list[ItemResponse])
+@router.get("", response_model=ItemListResponse)
 async def list_items(
     conn: Annotated[AsyncConnection, Depends(get_db_connection)],
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ):
-    return await service.list_items(conn, limit=limit, offset=offset)
+    items, total = await service.list_items(conn, limit=limit, offset=offset)
+    return {"total": total, "items": items}
 
 
 @router.get("/{item_id}", response_model=ItemResponse)
