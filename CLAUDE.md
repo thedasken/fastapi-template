@@ -30,6 +30,18 @@ just lint
 
 This runs `ruff format src` and `ruff check --fix src`.
 
+**Testing:**
+
+```shell
+just test
+just test -v
+just test tests/items/
+```
+
+Tests require a running Postgres instance (`just up`) and migrations applied
+(`just migrate`). Each test rolls back its writes so the database stays clean
+between runs. `ENVIRONMENT=TESTING` is injected automatically via `pytest-env`.
+
 **Migrations:**
 
 ```shell
