@@ -99,6 +99,11 @@ async def test_update_item_empty_body_is_noop(client: AsyncClient, item: dict) -
     assert response.json()["title"] == item["title"]
 
 
+async def test_update_item_null_title_rejected(client: AsyncClient, item: dict) -> None:
+    response = await client.patch(f"/items/{item['id']}", json={"title": None})
+    assert response.status_code == 422
+
+
 async def test_update_item_not_found(client: AsyncClient) -> None:
     response = await client.patch("/items/999999", json={"title": "Ghost"})
     assert response.status_code == 404
