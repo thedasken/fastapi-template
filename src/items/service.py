@@ -44,9 +44,6 @@ async def create_item(data: ItemCreate, conn: AsyncConnection) -> dict:
 
 async def update_item(item_id: int, data: ItemUpdate, conn: AsyncConnection) -> dict:
     payload = data.model_dump(exclude_unset=True)
-    if not payload:
-        logger.debug("Item update skipped", extra={"item_id": item_id})
-        return await get_item_by_id(item_id, conn)
     query = (
         update(items).where(items.c.id == item_id).values(**payload).returning(items)
     )

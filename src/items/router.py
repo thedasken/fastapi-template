@@ -39,12 +39,14 @@ async def update_item(
     data: ItemUpdate,
     conn: Annotated[AsyncConnection, Depends(get_db_connection)],
 ):
+    if not data.model_fields_set:
+        return item
     return await service.update_item(item["id"], data, conn)
 
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_item(
-    item: Annotated[dict, Depends(valid_item_id)],
+    item_id: int,
     conn: Annotated[AsyncConnection, Depends(get_db_connection)],
 ):
-    await service.delete_item(item["id"], conn)
+    await service.delete_item(item_id, conn)
