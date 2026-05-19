@@ -8,7 +8,9 @@ to the client. That behavior may block `StreamingResponse` responses and can
 interfere with the asynchronous flow of the API. This is especially easy to hit
 when middleware inspects request or response bodies.
 
-More context: https://stackoverflow.com/questions/68830274/blocked-code-while-using-middleware-and-dependency-injections-to-log-requests-in
+The root cause is that `BaseHTTPMiddleware` wraps the ASGI send callable in a way that
+buffers the full response body before returning it, which blocks streaming and breaks
+the async flow when middleware tries to inspect or modify the response.
 
 Use a pure ASGI middleware instead. For example, a response logger can wrap the
 `send` callable and inspect messages without consuming the response:
