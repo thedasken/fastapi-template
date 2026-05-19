@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
+import src.models  # noqa: F401 — registers all feature Tables on metadata
 from alembic import context
 from src.config import settings
 from src.database import metadata

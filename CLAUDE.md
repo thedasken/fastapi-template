@@ -69,6 +69,7 @@ Application code lives in `src/`. Features should use a feature-slice layout lik
 - `src/main.py` — FastAPI app setup, lifespan, Sentry initialization for deployed environments, CORS middleware, exception handlers, `/health`, and router registration.
 - `src/config.py` — `pydantic-settings` config loaded from `.env`. `DATABASE_URL` is used by Alembic, `DATABASE_ASYNC_URL` is used at runtime. Deployed environments require `SENTRY_DSN`; non-debug environments hide OpenAPI docs.
 - `src/database.py` — async SQLAlchemy engine, shared `metadata`, and `get_db_connection()` FastAPI dependency.
+- `src/models.py` — imports every feature's `models` module so all `Table` objects are registered on `metadata` before Alembic autogenerate runs.
 - `src/constants.py` — database naming convention and `Environment` enum.
 - `src/schemas.py` — `CustomModel`, including timezone-aware datetime JSON serialization.
 - `src/exceptions.py` — `DetailedHTTPException` base class and shared typed HTTP exceptions.
@@ -87,8 +88,9 @@ Services should execute queries and DML with the provided connection. Do not cal
 `commit()` or `rollback()` inside services; transaction lifecycle belongs to the
 FastAPI dependency or to an explicit outer context.
 
-Alembic imports `metadata` from `src/database.py` for autogeneration. Import new
-feature model modules in `src/database.py` so their tables are registered.
+Alembic imports `metadata` from `src/database.py` for autogeneration. When you
+add a new feature with a `models.py`, add an import for it in `src/models.py`
+so its tables are registered on `metadata` before autogenerate runs.
 
 ## Logging
 

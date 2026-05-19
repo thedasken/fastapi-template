@@ -20,6 +20,3 @@ metadata = MetaData(naming_convention=DB_NAMING_CONVENTION)
 async def get_db_connection() -> AsyncGenerator[AsyncConnection, None]:
     async with engine.begin() as connection:
         yield connection
-
-
-from src.items import models as items_models  # noqa: E402, F401
