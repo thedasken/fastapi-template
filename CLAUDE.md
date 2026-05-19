@@ -44,7 +44,7 @@ docker compose -f docker-compose.prod.yml up -d --build   # production
 All application code lives in `src/`. There is no subdirectory structure yet — routers, services, and models for new features should be added here as the project grows.
 
 **Key files:**
-- [src/main.py](src/main.py) — FastAPI app factory: lifespan, Sentry init (deployed envs only), CORS middleware, `/healthcheck` endpoint.
+- [src/main.py](src/main.py) — FastAPI app factory: lifespan, Sentry init (deployed envs only), CORS middleware, `/health` endpoint.
 - [src/config.py](src/config.py) — `Config(pydantic_settings.BaseSettings)` loaded from `.env`. Two DB URLs are required: `DATABASE_URL` (sync, used by Alembic) and `DATABASE_ASYNC_URL` (async, used at runtime). `SENTRY_DSN` is mandatory when `ENVIRONMENT` is `STAGING` or `PRODUCTION`. OpenAPI docs (`/docs`) are hidden in non-debug environments.
 - [src/database.py](src/database.py) — Async SQLAlchemy engine (asyncpg) with pessimistic connection pooling. Use `fetch_one`, `fetch_all`, `execute` helpers instead of raw session/connection management. Pass an `AsyncConnection` explicitly for multi-statement transactions; omit it for single-statement auto-connect. `get_db_connection` is a FastAPI dependency.
 - [src/constants.py](src/constants.py) — `DB_NAMING_CONVENTION` (applied to `metadata`) and the `Environment` enum with `is_debug`, `is_testing`, `is_deployed` properties.
