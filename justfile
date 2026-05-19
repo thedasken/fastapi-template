@@ -20,6 +20,9 @@ lint:
   uv run ruff format src
   just ruff --fix
 
+test *args:
+  uv run pytest {{args}}
+
 # docker
 up:
   docker compose up -d

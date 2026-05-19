@@ -21,7 +21,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "anyio[trio]",
+    "httpx",
     "pre-commit>=4.6.0",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-env",
     "ruff",
 ]
 prod = [
@@ -32,6 +37,10 @@ prod = [
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+env = ["ENVIRONMENT=TESTING"]
 
 [build-system]
 requires = ["hatchling"]
