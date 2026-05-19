@@ -45,6 +45,8 @@ async def update_item(
     return await service.update_item(item["id"], data, conn)
 
 
+# DELETE intentionally skips valid_item_id to avoid a
+# redundant SELECT – service.delete_item handles 404 via rowcount.
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_item(
     item_id: int,
