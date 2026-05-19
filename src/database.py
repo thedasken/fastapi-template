@@ -82,3 +82,6 @@ async def get_db_connection() -> AsyncConnection:
         yield connection
     finally:
         await connection.close()
+
+
+from src.items import models as items_models  # noqa: E402, F401
