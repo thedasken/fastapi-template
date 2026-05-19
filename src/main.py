@@ -43,7 +43,11 @@ async def healthcheck() -> dict[str, str]:
 
 @app.exception_handler(DetailedHTTPException)
 async def detailed_http_exception_handler(request: Request, exc: DetailedHTTPException):
-    return JSONResponse(status_code=exc.STATUS_CODE, content={"detail": exc.DETAIL})
+    return JSONResponse(
+        status_code=exc.STATUS_CODE,
+        content={"detail": exc.DETAIL},
+        headers=exc.headers,
+    )
 
 
 app.include_router(items_router)

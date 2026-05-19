@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from src.database import get_db_connection
@@ -14,8 +14,8 @@ router = APIRouter(prefix="/items", tags=["items"])
 @router.get("", response_model=list[ItemResponse])
 async def list_items(
     conn: Annotated[AsyncConnection, Depends(get_db_connection)],
-    limit: int = 50,
-    offset: int = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     return await service.list_items(conn, limit=limit, offset=offset)
 
