@@ -33,6 +33,6 @@ app.add_middleware(
 )
 
 
-@app.get("/healthcheck", include_in_schema=False)
+@app.get("/health", include_in_schema=False)
 async def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
