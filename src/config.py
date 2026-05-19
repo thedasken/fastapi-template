@@ -27,7 +27,8 @@ class Config(CustomBaseSettings):
     CORS_ORIGINS_REGEX: str | None = None
     CORS_HEADERS: list[str] = ["*"]
 
-    APP_VERSION: str = "0.1"
+    APP_VERSION: str = "0.1.0"
+    API_VERSION: str = "0"
 
     @model_validator(mode="after")
     def validate_sentry_non_local(self) -> "Config":
@@ -37,11 +38,12 @@ class Config(CustomBaseSettings):
         return self
 
 
-settings = Config()
+settings = Config()  # pyright: ignore[reportCallIssue]
 
+# TODO: Make the APP_NAME a env variable, no need to change this file for app name
 app_configs: dict[str, Any] = {"title": "App API"}
 if settings.ENVIRONMENT.is_deployed:
-    app_configs["root_path"] = f"/v{settings.APP_VERSION}"
+    app_configs["root_path"] = f"/v{settings.API_VERSION}"
 
 if not settings.ENVIRONMENT.is_debug:
     app_configs["openapi_url"] = None  # hide docs
