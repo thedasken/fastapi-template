@@ -23,11 +23,11 @@ async def get_item_by_id(item_id: int, conn: AsyncConnection) -> dict:
 async def list_items(
     conn: AsyncConnection, *, limit: int = 50, offset: int = 0
 ) -> tuple[list[dict], int]:
+    filtered = select(items)
     items_query = (
-        select(items).limit(limit).offset(offset).order_by(items.c.created_at.desc())
+        filtered.limit(limit).offset(offset).order_by(items.c.created_at.desc())
     )
-    # NOTE: if you add WHERE conditions to items_query, replicate them here
-    count_query = select(func.count()).select_from(items)
+    count_query = select(func.count()).select_from(filtered.subquery())
     items_result = await conn.execute(items_query)
     count_result = await conn.execute(count_query)
     return [
