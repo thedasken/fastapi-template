@@ -11,5 +11,4 @@ async def valid_item_id(
     item_id: int,
     conn: Annotated[AsyncConnection, Depends(get_db_connection)],
 ) -> dict:
-    """Resolve and validate that an item exists, return its row."""
     return await service.get_item_by_id(item_id, conn)

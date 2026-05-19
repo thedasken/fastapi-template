@@ -23,11 +23,14 @@ async def get_item_by_id(item_id: int, conn: AsyncConnection) -> dict:
 async def list_items(
     conn: AsyncConnection, *, limit: int = 50, offset: int = 0
 ) -> tuple[list[dict], int]:
-    filtered = select(items)
+    # To add filters, build a `where_clause` and pass it to both queries:
+    #   where_clause = items.c.title.ilike(f"%{search}%")
+    #   items_query = select(items).where(where_clause).limit(limit)...
+    #   count_query = select(func.count()).select_from(items).where(where_clause)
     items_query = (
-        filtered.limit(limit).offset(offset).order_by(items.c.created_at.desc())
+        select(items).limit(limit).offset(offset).order_by(items.c.created_at.desc())
     )
-    count_query = select(func.count()).select_from(filtered.subquery())
+    count_query = select(func.count()).select_from(items)
     items_result = await conn.execute(items_query)
     count_result = await conn.execute(count_query)
     return [
