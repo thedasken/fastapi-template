@@ -15,6 +15,8 @@ This repo is kind of a template I use when starting up new FastAPI projects:
   - Dockerfile optimized for small size and fast builds with a non-root user
   - JSON logs
   - sentry for deployed envs
+- middleware guidance
+  - prefer pure ASGI middleware over `BaseHTTPMiddleware` ([details](docs/middleware.md))
 - and some other extras like global exceptions, sqlalchemy keys naming convention, shortcut scripts for alembic, etc.
 
 ## Local Development
