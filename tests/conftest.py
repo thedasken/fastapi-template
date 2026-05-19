@@ -2,11 +2,13 @@ from typing import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from src.config import settings
 from src.database import get_db_connection
+from src.items.models import items
 from src.main import app
 
 # NullPool avoids asyncpg connections being reused across event loops between tests.
@@ -18,6 +20,7 @@ async def db_conn() -> AsyncGenerator[AsyncConnection, None]:
     """Yield a connection whose transaction is rolled back after the test."""
     async with _test_engine.connect() as conn:
         transaction = await conn.begin()
+        await conn.execute(delete(items))
         yield conn
         await transaction.rollback()
 
