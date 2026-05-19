@@ -1,7 +1,7 @@
 # Only to showcase the url pattern matching using root_path
 services:
   traefik:
-    image: traefik:v3.7
+    image: docker.io/library/traefik:v3.7
     container_name: traefik
     command:
       - "--api.insecure=true"
@@ -18,7 +18,7 @@ services:
       - web
 
   postgres:
-    image: library/postgres:17-trixie
+    image: docker.io/library/postgres:17-trixie
     environment:
       - POSTGRES_USER=app
       - POSTGRES_PASSWORD=app
