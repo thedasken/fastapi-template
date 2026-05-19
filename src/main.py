@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from src.config import app_configs, settings
+from src.items.router import router as items_router
 
 
 @asynccontextmanager
@@ -36,3 +37,6 @@ app.add_middleware(
 @app.get("/health", include_in_schema=False)
 async def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
+
+
+app.include_router(items_router)

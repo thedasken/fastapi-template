@@ -17,27 +17,28 @@ services:
       start_period: 10s
       retries: 5
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - .env
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./src:/app/src
-    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
-      interval: 10s
-      timeout: 5s
-      start_period: 10s
-      retries: 3
+  # Comment if you have / use uv for local development instead of docker
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.prod
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./src:/app/src
+  #   command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     start_period: 10s
+  #     retries: 3
 
 volumes:
   app_db_data:

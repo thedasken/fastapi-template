@@ -1,56 +1,131 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with
+code in this repository.
 
 ## Commands
 
-**Setup (first time):**
+**Setup:**
+
 ```shell
 cp .env.example .env
 uv sync --all-groups
 pre-commit install
-just up        # starts Postgres via docker-compose
-just migrate   # run migrations
+just up
+just migrate
 ```
 
 **Development:**
+
 ```shell
-just run                              # uvicorn with --reload
-just run --log-config logging.ini     # with structured logging
+just run
+just run --log-config logging.ini
 ```
 
 **Linting:**
+
 ```shell
-just lint     # ruff format + ruff check --fix on src/
+just lint
 ```
+
+This runs `ruff format src` and `ruff check --fix src`.
+
+**Testing:**
+
+```shell
+just test
+just test -v
+just test tests/items/
+```
+
+Tests require a running Postgres instance (`just up`) and migrations applied
+(`just migrate`). Each test rolls back its writes so the database stays clean
+between runs. `ENVIRONMENT=TESTING` is injected automatically via `pytest-env`.
 
 **Migrations:**
+
 ```shell
-just mm <migration_name>   # autogenerate migration from src/database.py changes
-just migrate               # upgrade to head
-just downgrade -1          # step back (or -2, base, or migration hash)
+just mm <migration_name>
+just migrate
+just downgrade -1
 ```
 
-Migration files are named `YYYY-MM-DD_slug` and are auto-formatted with ruff.
+Migration files use the `YYYY-MM-DD_slug` naming format.
 
 **Docker:**
+
 ```shell
-just up / just kill / just build / just ps / just down
-docker compose -f docker-compose.prod.yml up -d --build   # production
+just up
+just kill
+just build
+just ps
+just down
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ## Architecture
 
-All application code lives in `src/`. There is no subdirectory structure yet — routers, services, and models for new features should be added here as the project grows.
+Application code lives in `src/`. Features should use a feature-slice layout like
+`src/items`:
 
-**Key files:**
-- [src/main.py](src/main.py) — FastAPI app factory: lifespan, Sentry init (deployed envs only), CORS middleware, `/health` endpoint.
-- [src/config.py](src/config.py) — `Config(pydantic_settings.BaseSettings)` loaded from `.env`. Two DB URLs are required: `DATABASE_URL` (sync, used by Alembic) and `DATABASE_ASYNC_URL` (async, used at runtime). `SENTRY_DSN` is mandatory when `ENVIRONMENT` is `STAGING` or `PRODUCTION`. OpenAPI docs (`/docs`) are hidden in non-debug environments.
-- [src/database.py](src/database.py) — Async SQLAlchemy engine (asyncpg) with pessimistic connection pooling. Use `fetch_one`, `fetch_all`, `execute` helpers instead of raw session/connection management. Pass an `AsyncConnection` explicitly for multi-statement transactions; omit it for single-statement auto-connect. `get_db_connection` is a FastAPI dependency.
-- [src/constants.py](src/constants.py) — `DB_NAMING_CONVENTION` (applied to `metadata`) and the `Environment` enum with `is_debug`, `is_testing`, `is_deployed` properties.
-- [src/schemas.py](src/schemas.py) — `CustomModel(pydantic.BaseModel)` enforces UTC-aware datetime serialization. All request/response models should inherit from it.
-- [src/exceptions.py](src/exceptions.py) — `DetailedHTTPException` base class with typed subclasses (`NotFound`, `PermissionDenied`, `BadRequest`, `NotAuthenticated`). Raise these instead of raw `HTTPException`.
+- `router.py` exposes FastAPI routes.
+- `service.py` contains business logic and SQL execution.
+- `dependencies.py` contains route dependencies such as entity validation.
+- `schemas.py` contains request and response Pydantic models.
+- `models.py` contains SQLAlchemy Core table definitions.
+- `exceptions.py` contains feature-specific HTTP exceptions.
+- `constants.py` contains feature-specific constants and error codes.
 
-**Database pattern:** Tables are defined directly on the `metadata` object in `src/database.py` (SQLAlchemy Core style, not ORM declarative). Alembic's `env.py` imports that `metadata` for autogenerate.
+## Key Files
 
-**Environments:** `LOCAL` and `TESTING` are debug (docs visible, no Sentry required). `STAGING` and `PRODUCTION` are deployed (docs hidden, Sentry required, `root_path` set to `/v{API_VERSION}`).
+- `src/main.py` — FastAPI app setup, lifespan, Sentry initialization for deployed environments, CORS middleware, exception handlers, `/health`, and router registration.
+- `src/config.py` — `pydantic-settings` config loaded from `.env`. `DATABASE_URL` is used by Alembic, `DATABASE_ASYNC_URL` is used at runtime. Deployed environments require `SENTRY_DSN`; non-debug environments hide OpenAPI docs.
+- `src/database.py` — async SQLAlchemy engine, shared `metadata`, and `get_db_connection()` FastAPI dependency.
+- `src/models.py` — imports every feature's `models` module so all `Table` objects are registered on `metadata` before Alembic autogenerate runs.
+- `src/constants.py` — database naming convention and `Environment` enum.
+- `src/schemas.py` — `CustomModel`, including timezone-aware datetime JSON serialization.
+- `src/exceptions.py` — `DetailedHTTPException` base class and shared typed HTTP exceptions.
+- `docs/middleware.md` — guidance for implementing custom middleware as pure ASGI middleware.
+
+## Database Pattern
+
+Use SQLAlchemy Core, not ORM declarative models. Define tables as `Table`
+objects attached to the shared `metadata` from `src/database.py`.
+
+Routes receive an `AsyncConnection` from `get_db_connection()`. The dependency
+uses `engine.begin()`, so each request gets a transaction that commits when the
+request succeeds and rolls back when an exception is raised.
+
+Services should execute queries and DML with the provided connection. Do not call
+`commit()` or `rollback()` inside services; transaction lifecycle belongs to the
+FastAPI dependency or to an explicit outer context.
+
+Alembic imports `metadata` from `src/database.py` for autogeneration. When you
+add a new feature with a `models.py`, add an import for it in `src/models.py`
+so its tables are registered on `metadata` before autogenerate runs.
+
+## Logging
+
+Declare a module-local logger only in modules that actually log:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+```
+
+Avoid shared loggers in utility modules. A module-local logger preserves the real
+source module name in logs.
+
+## Middleware
+
+Prefer pure ASGI middleware for custom middleware. Avoid subclassing
+`BaseHTTPMiddleware`, especially for middleware that inspects request or response
+bodies, because it can interfere with streaming responses and async behavior.
+See `docs/middleware.md`.
+
+## Environments
+
+`LOCAL` and `TESTING` are debug environments: docs are visible and Sentry is not
+required. `STAGING` and `PRODUCTION` are deployed environments: docs are hidden,
+Sentry is required, and FastAPI uses `/v{API_VERSION}` as `root_path`.
