@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncConnection
 
@@ -5,12 +7,15 @@ from src.items.exceptions import ItemNotFound
 from src.items.models import items
 from src.items.schemas import ItemCreate, ItemUpdate
 
+logger = logging.getLogger(__name__)
+
 
 async def get_item_by_id(item_id: int, conn: AsyncConnection) -> dict:
     query = select(items).where(items.c.id == item_id)
     result = await conn.execute(query)
     row = result.mappings().first()
     if row is None:
+        logger.info("Item not found", extra={"item_id": item_id})
         raise ItemNotFound()
     return dict(row)
 
@@ -28,12 +33,19 @@ async def list_items(
 async def create_item(data: ItemCreate, conn: AsyncConnection) -> dict:
     query = insert(items).values(**data.model_dump()).returning(items)
     result = await conn.execute(query)
-    return dict(result.mappings().first())
+    row = result.mappings().first()
+    # Should always return a row, but explicit check for Pylance
+    if row is None:
+        raise RuntimeError("Item creation did not return a row")
+    item = dict(row)
+    logger.info("Item created", extra={"item_id": item["id"]})
+    return item
 
 
 async def update_item(item_id: int, data: ItemUpdate, conn: AsyncConnection) -> dict:
     payload = data.model_dump(exclude_unset=True)
     if not payload:
+        logger.debug("Item update skipped", extra={"item_id": item_id})
         return await get_item_by_id(item_id, conn)
     query = (
         update(items).where(items.c.id == item_id).values(**payload).returning(items)
@@ -41,12 +53,17 @@ async def update_item(item_id: int, data: ItemUpdate, conn: AsyncConnection) -> 
     result = await conn.execute(query)
     row = result.mappings().first()
     if row is None:
+        logger.info("Item not found during update", extra={"item_id": item_id})
         raise ItemNotFound()
-    return dict(row)
+    item = dict(row)
+    logger.info("Item updated", extra={"item_id": item_id, "fields": sorted(payload)})
+    return item
 
 
 async def delete_item(item_id: int, conn: AsyncConnection) -> None:
     query = delete(items).where(items.c.id == item_id)
     result = await conn.execute(query)
     if result.rowcount == 0:
+        logger.info("Item not found during delete", extra={"item_id": item_id})
         raise ItemNotFound()
+    logger.info("Item deleted", extra={"item_id": item_id})
