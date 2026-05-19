@@ -11,7 +11,7 @@ class ItemCreate(CustomModel):
 
 
 class ItemUpdate(CustomModel):
-    title: str = Field(default=None, min_length=1, max_length=255)
+    title: str = Field(default=None, min_length=1, max_length=255)  # pyright: ignore[reportAssignmentType]
     description: str | None = None
 
 
