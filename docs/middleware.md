@@ -23,8 +23,8 @@ class LogResponseMDW:
 
     async def __call__(self, scope, receive, send):
         async def send_wrapper(message: Message):
-            # Ici tu peux inspecter/logger le message sans le consommer
-            # Par exemple, logger le body quand message["type"] == "http.response.body"
+            # Inspect or log the message here without consuming it.
+            # For example, log the body when message["type"] == "http.response.body".
             await send(message)
 
         await self.app(scope, receive, send_wrapper)
